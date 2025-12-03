@@ -179,9 +179,31 @@ export default function Home() {
     setCapturedBlob(null);
   };
 
+  const [dragActive, setDragActive] = useState<string | null>(null);
+
+  const handleDrag = (e: React.DragEvent, key: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(key);
+    } else if (e.type === "dragleave") {
+      setDragActive(null);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent, key: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(null);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      await handleImageUpload(key, e.dataTransfer.files[0]);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8 md:px-8 md:py-12 text-slate-900">
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="max-w-5xl mx-auto space-y-10">
 
         {/* Hero Section */}
         <div className="text-center space-y-4">
@@ -194,9 +216,16 @@ export default function Home() {
         </div>
 
         {/* Upload Grid */}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-5 md:gap-6">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5 md:gap-6">
           {VIEWS.map(({ key, label, icon: Icon, description }) => (
-            <div key={key} className="relative aspect-square group">
+            <div
+              key={key}
+              className="relative aspect-[4/5] group"
+              onDragEnter={(e) => handleDrag(e, key)}
+              onDragLeave={(e) => handleDrag(e, key)}
+              onDragOver={(e) => handleDrag(e, key)}
+              onDrop={(e) => handleDrop(e, key)}
+            >
               {previews[key] ? (
                 <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-sm border border-slate-200">
                   <img
@@ -218,7 +247,10 @@ export default function Home() {
                 </div>
               ) : (
                 <div className={clsx(
-                  "relative flex flex-col items-center justify-between w-full h-full rounded-2xl border-2 border-dashed border-slate-300 bg-white p-2 transition-all",
+                  "relative flex flex-col items-center justify-between w-full h-full rounded-2xl border-2 border-dashed transition-all duration-200",
+                  dragActive === key
+                    ? "border-slate-900 bg-slate-100 scale-[1.02]"
+                    : "border-slate-300 bg-white",
                   isPending ? "opacity-50" : "hover:bg-slate-50 hover:border-slate-400"
                 )}>
 
@@ -231,7 +263,7 @@ export default function Home() {
                       onMouseLeave={() => setActiveTooltip(null)}
                       className="text-slate-400 hover:text-slate-600"
                     >
-                      <Info size={14} />
+                      <Info size={16} />
                     </button>
                     {activeTooltip === key && (
                       <div className="absolute bottom-full right-0 mb-2 w-48 bg-slate-900 text-white text-xs p-2 rounded-lg shadow-xl z-20 pointer-events-none">
@@ -241,15 +273,18 @@ export default function Home() {
                     )}
                   </div>
 
-                  <div className="flex-1 flex flex-col items-center justify-center w-full mt-4">
-                    <Icon className="w-8 h-8 text-slate-400 mb-2" strokeWidth={1.5} />
-                    <span className="text-[10px] md:text-xs text-slate-500 font-medium text-center leading-tight">{label}</span>
+                  <div className="flex-1 flex flex-col items-center justify-center w-full mt-4 pointer-events-none">
+                    <Icon className={clsx("w-10 h-10 mb-3 transition-colors", dragActive === key ? "text-slate-900" : "text-slate-400")} strokeWidth={1.5} />
+                    <span className="text-xs md:text-sm text-slate-500 font-medium text-center leading-tight">{label}</span>
+                    {dragActive === key && (
+                      <span className="text-[10px] text-slate-400 mt-1 animate-pulse">Drop to upload</span>
+                    )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 w-full mt-1">
+                  <div className="grid grid-cols-2 gap-2 w-full mt-1 p-2">
                     {/* Gallery Input */}
                     <label className={clsx(
-                      "flex items-center justify-center p-2 rounded-lg bg-slate-100 hover:bg-slate-200 cursor-pointer transition-colors",
+                      "flex items-center justify-center p-3 rounded-lg bg-slate-100 hover:bg-slate-200 cursor-pointer transition-colors",
                       isPending && "pointer-events-none"
                     )}>
                       <input
@@ -262,7 +297,7 @@ export default function Home() {
                           if (file) handleImageUpload(key, file);
                         }}
                       />
-                      <Upload size={16} className="text-slate-600" />
+                      <Upload size={18} className="text-slate-600" />
                     </label>
 
                     {/* Camera Button (Webcam) */}
@@ -271,11 +306,11 @@ export default function Home() {
                       onClick={() => startCamera(key)}
                       disabled={isPending}
                       className={clsx(
-                        "flex items-center justify-center p-2 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors",
+                        "flex items-center justify-center p-3 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors",
                         isPending && "pointer-events-none opacity-50"
                       )}
                     >
-                      <Camera size={16} className="text-slate-600" />
+                      <Camera size={18} className="text-slate-600" />
                     </button>
                   </div>
                 </div>
