@@ -1,9 +1,16 @@
 #!/bin/bash
 
-# Check if GEMINI_API_KEY is set
+# Load API Key from .env.local if it exists
+if [ -f .env.local ]; then
+  echo "Reading GEMINI_API_KEY from .env.local..."
+  # Extract the key, handling potential quotes and whitespace
+  GEMINI_API_KEY=$(grep "^GEMINI_API_KEY=" .env.local | cut -d '=' -f2- | tr -d '"' | tr -d "'")
+fi
+
+# Check if key was found
 if [ -z "$GEMINI_API_KEY" ]; then
-  echo "Error: GEMINI_API_KEY environment variable is not set."
-  echo "Please export GEMINI_API_KEY='your-api-key' and try again."
+  echo "Error: GEMINI_API_KEY not found."
+  echo "Please ensure it is set in .env.local or exported as an environment variable."
   exit 1
 fi
 
