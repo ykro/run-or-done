@@ -33,12 +33,13 @@ def load_api_key():
     """Load API key from .env.local"""
     env_path = Path(".env.local")
     if env_path.exists():
-        load_dotenv(dotenv_path=env_path)
+        load_dotenv(dotenv_path=env_path, override=True)
     
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         console.print("[bold red]Error:[/bold red] GEMINI_API_KEY not found in .env.local or environment variables.")
         raise typer.Exit(code=1)
+    
     return api_key
 
 def get_system_prompt() -> str:
@@ -56,6 +57,20 @@ def infer_view_from_filename(filename: str) -> Optional[str]:
         if view in fname:
             return view
     return None
+
+def resize_image(image: Image.Image, max_dimension: int = 1568) -> Image.Image:
+    """
+    Resize image maintaining aspect ratio so the longest side does not exceed max_dimension.
+    """
+    width, height = image.size
+    if max(width, height) <= max_dimension:
+        return image
+    
+    scale = max_dimension / max(width, height)
+    new_width = int(width * scale)
+    new_height = int(height * scale)
+    
+    return image.resize((new_width, new_height), Image.Resampling.LANCZOS)
 
 @app.command()
 def analyze(
@@ -105,6 +120,8 @@ def analyze(
             
         try:
             img = Image.open(img_path)
+            # Resize image for optimization
+            img = resize_image(img)
             image_parts.append(img)
         except Exception as e:
             console.print(f"[bold red]Error loading image {img_path.name}:[/bold red] {e}")
