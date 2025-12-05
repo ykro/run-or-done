@@ -23,25 +23,34 @@ Perform a deep technical scan. Apply the **"Mud Masking Protocol"** for debris. 
 1.  **Detect Category:** Distinguish between ROAD (Flat/Grooved) and TRAIL (Lugged) *if Outsole or Side view is available*.
 
 2.  **Midsole Forensics (The Truth Teller) -> Determines `life_remaining_percentage`:**
-    * **Step A: The Silhouette Test:**
-        * *Protocol:* Ignore surface dirt/color/paint. Analyze the **geometry of the sidewall**.
-        * *Secondary Check:* Inspect for **"Delamination"** (glue failure).
+    * **Step A: The Silhouette & Pattern Test:**
+        * *Protocol:* Ignore surface dirt/color. Analyze the **geometry of the sidewall**.
+        * *Secondary Check (Bonding):* Inspect the junction between Upper and Midsole for **"Delamination"** (dark gaps indicating glue failure).
         * *Mud/Paint Distinction:*
-            * **Additive (Ignore):** Mud clumps, "Painted Graphics" (patterns printed on foam), or "Molding Textures" (fine uniform lines). **Action:** Treat as Smooth.
+            * **Additive (Ignore):** Mud clumps, "Painted Graphics", or "Molding Textures". **Action:** FORCE IGNORE.
             * **Subtractive (Flag):** Deep cuts, "Accordion" folds, or shapes squashed flat.
+        * **Design vs. Distress Rule (The "Sculpted" Test):**
+            * *Engineered Geometry (Design):* Sculpted waves, hexagons, or dots. They are **smooth, molded, and uniform**.
+            * *Pattern Aspect Ratio Check (Crucial for Fresh Foam/Textured):*
+                * **Healthy:** Shapes look "Tall" or equidistant (Hexagons/Circles).
+                * **Fatigued (Tier B):** Shapes look **"Squashed"** vertically (Ovals/Lines). The pattern exists but is compressed.
+                * **Collapsed (Tier C):** The pattern is obliterated/merged into wrinkles.
+            * *Chaos Check:* Only flag creases that are **irregular**, chaotic, localized to high-stress zones, or clearly **disrupt** the manufactured geometric pattern.
     * **Step B: Classification (Binary Triggers):**
         * **TIER A (New/Resilient):** Sidewall is **CONVEX** (bulging). Surface texture is ignored if volume is full. **Range: 90-100%**.
-        * **TIER B (Functional Fatigue):** Sidewall is straight. Creases are "Spiderweb" (random). **Range: 50-70%**.
-        * **TIER C (CRITICAL FAILURE):** **TRIGGER:** Any trace of **"Parallel Horizontal Folds"**, **"Shear Lines"**, **"Tilt"** (>10 deg), or **"Delamination"**. **Range: 0-20%** (Force low score).
-    * **Step C: The "Freshness Sync" (Correction for Dirty New Shoes):**
-        * *Logic:* If the tires are new, the engine is likely new (unless proven dead).
-        * **IF** Outsole Score > 80 (Confirmed Tier A) **AND** Midsole is NOT Tier C:
-        * **THEN** Force Midsole to **TIER A (85-95%)**. (Assume any Tier B signs are just dirt/paint confusion).
+        * **TIER B (Functional Fatigue):** Sidewall is straight. Creases are "Spiderweb" (random) OR the geometric design pattern is visibly **compressed/squashed** but distinct. **Range: 35-65%**.
+        * **TIER C (CRITICAL FAILURE):** **TRIGGER:** Any trace of **"Deep Accordion Folds"** (parallel horizontal lines), **"Elephant Skin"** (dense crinkling), **"Shear Lines"**, **"Tilt"** (>10 deg), or **"Delamination"**.
+            * *Crucial Distinction:* Even if the folds are "regular" or parallel, if they look like **deep cuts** or **crushed skin**, it is TIER C.
+            * *Override:* This trigger overrides the "Design" rule if the creases cut *across* the design pattern. **Range: 0-20%** (Force low score).
+    * **Step C: The "Freshness Sync" (Strict Correction):**
+        * *Logic:* Only a pristine Outsole proves the shoe is new.
+        * **IF** Outsole Score > 80 (Confirmed Tier A) **AND** Midsole Trigger was NOT "Delamination" or "Tilt":
+        * **THEN** Force Midsole to **TIER A (85-95%)**. (Override triggers if Outsole is new, assuming the folds are actually Design Geometry).
 
 3.  **Outsole Forensics (Geometry) -> Determines `outsole.condition_score`:**
     * **Step A: Mud Masking:**
         * *Check:* Is the sole covered in mud?
-            * **YES:** Apply **"Strict Benefit of Doubt"**. If mud is present, **DEFAULT to Score 90-100**. Do NOT downgrade for "hidden edges". Only downgrade if you see **Missing Lugs** (bald patches).
+            * **YES:** Apply **"Strict Benefit of Doubt"**. If mud is present, **DEFAULT to Score 90-100**. Only downgrade if you see **Missing Lugs** or **Exposed Foam**.
             * **NO (Clean):** Apply Forensic Detail below.
     * **Step B: Forensic Detail (Clean/Partially Obscured):**
         * **Substrate Exposure:** Rubber worn to foam -> **Score 0**.
@@ -49,13 +58,15 @@ Perform a deep technical scan. Apply the **"Mud Masking Protocol"** for debris. 
         * **TRAIL Logic:**
             * *Sharp/High:* **Score 90-100**.
             * *Rounded:* Lugs distinct but edges soft -> **Score 40-60**.
-            * *Flat/Blobby:* **TRIGGER:** Lugs <2mm height in forefoot. **Score: 10-20**.
+            * *Flat/Blobby:* **TRIGGER:** Lugs <2mm height. **Score: 10-20**.
         * **ROAD Logic:**
             * *Granular:* Micro-texture visible. **Score 90-100**.
-            * *Glassy/Smooth:* **TRIGGER:** Reflection on forefoot. **Score: 10-20**.
-    * **Step C: The "Aging Veto" (Safety Valve):**
-        * **IF** Midsole is **TIER C (0-20%)**:
-        * **THEN** Cap Outsole Score at **Max 40**. (Override Mud Masking. Dead foam = Old shoe).
+            * *Matte Smooth:* Texture is worn smooth but rubber is opaque (not reflective) and grooves remain deep. **Score: 40-60** (Normal Wear).
+            * *Glassy/Reflective:* **TRIGGER:** Surface looks like plastic/mirror or reflects light in the forefoot. **Score: 10-20** (Critical).
+    * **Step C: The "Aging Veto" (Graduated Safety Valve):**
+        * *Logic Rule:* The Outsole cannot be significantly "newer" than the Midsole.
+        * **IF** Midsole is **TIER C (0-20%)**: Cap Outsole Score at **Max 40**.
+        * **IF** Midsole is **TIER B (35-65%)**: Cap Outsole Score at **Max 70**.
 
 4.  **Upper Integrity (Containment):**
     * *Analysis:* Distinguish between "Stains" (Cosmetic) and "Fiber Fatigue" (Structural).
@@ -63,7 +74,7 @@ Perform a deep technical scan. Apply the **"Mud Masking Protocol"** for debris. 
     * *Defect Threshold:*
         * Mud/Stains: No deduction.
         * Holes >5mm OR Crushed Heel: **Max Score 40**.
-    
+        
 **OUTPUT FORMAT**
 You must output **ONLY VALID JSON**. No markdown formatting, no code blocks, no introductory text, no emojis.
 Use the following schema:

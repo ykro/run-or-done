@@ -40,7 +40,6 @@ def load_api_key():
         console.print("[bold red]Error:[/bold red] GEMINI_API_KEY not found in .env.local or environment variables.")
         raise typer.Exit(code=1)
     
-    console.print(f"[bold blue]API Key loaded (last 4 chars):[/bold blue] ...{api_key[-4:]}")
     return api_key
 
 def get_system_prompt() -> str:
@@ -79,11 +78,15 @@ import json
 @app.command()
 def analyze(
     input_path: Path = typer.Argument(..., help="Path to an image file or directory of images"),
-    times: int = typer.Option(1, help="Number of times to run the analysis for consistency checking")
+    times: int = typer.Option(1, help="Number of times to run the analysis for consistency checking"),
+    json_mode: bool = typer.Option(False, "--json-mode", "-j", help="Output only JSON results to stdout, logs to stderr")
 ):
     """
     Run the shoe analysis on the provided image(s) using gemini-3-pro-preview.
     """
+    if json_mode:
+        console.file = sys.stderr
+
     api_key = load_api_key()
     client = genai.Client(api_key=api_key)
     
@@ -211,7 +214,9 @@ def analyze(
             })
 
     # Print Summary Table
-    if results_summary:
+    if json_mode:
+        print(json.dumps(results_summary))
+    elif results_summary:
         table = Table(title="Consistency Check Summary")
         table.add_column("Run", justify="right", style="cyan", no_wrap=True)
         table.add_column("Outsole Score", style="magenta")

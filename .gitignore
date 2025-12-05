@@ -43,3 +43,5 @@ next-env.d.ts
 # test assets
 test-assets/*
 
+batch_results.txt
+.gcp/

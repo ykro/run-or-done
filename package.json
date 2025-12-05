@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@google-cloud/firestore": "^8.0.0",
+    "@google-cloud/storage": "^7.18.0",
     "@google/generative-ai": "^0.24.1",
     "browser-image-compression": "^2.0.2",
     "clsx": "^2.1.1",

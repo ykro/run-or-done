@@ -76,6 +76,11 @@ export default function Home() {
   };
 
   const handleImageUpload = async (key: string, file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error("Invalid file type. Please upload an image (JPG, PNG, WEBP, HEIC).");
+      return;
+    }
+
     try {
       const options = {
         maxSizeMB: 1,
