@@ -18,27 +18,38 @@ AI-Powered Running Shoe Forensic Analysis application.
 2. Set Environment Variables:
    Create a `.env.local` file (optional for local dev, but recommended):
    ```
-   GEMINI_API_KEY=your_api_key_here
    ```
-
-3. Run locally:
-   ```bash
-   npm run dev
-   ```
-
-## Deployment
-
-To deploy to Google Cloud Run:
-
-1. Ensure you have `gcloud` installed and authenticated.
-2. Export your Gemini API Key:
-   ```bash
-   export GEMINI_API_KEY=your_api_key_here
-   ```
-3. Run the deployment script:
-   ```bash
-   ./deploy.sh
-   ```
+22:    GEMINI_API_KEY=your_api_key_here
+23:    # Google Cloud Config
+24:    GCP_PROJECT_ID=your_project_id
+25:    GCS_BUCKET_NAME=your_bucket_name
+26:    FIRESTORE_DATABASE_ID=(default)
+27:    # Local Auth (Not needed on Cloud Run)
+28:    GOOGLE_APPLICATION_CREDENTIALS=.gcp/credentials.json
+29:    ```
+30: 
+31: 3. Cloud Infrastructure Setup:
+32:    Ensure your `.gcp/credentials.json` is present, then run the setup script to provision/validate resources:
+33:    ```bash
+34:    uv run setup_gcs.py
+35:    ```
+36: 
+37: 4. Run locally:
+38:    ```bash
+39:    npm run dev
+40:    ```
+41: 
+42: ## Deployment
+43: 
+44: To deploy to Google Cloud Run:
+45: 
+46: 1. Ensure `gcloud` is authenticated.
+47: 2. Ensure `.env.local` contains all the variables listed above.
+48: 3. Run the deployment script:
+49:    ```bash
+50:    ./deploy.sh
+51:    ```
+52:    The script will automatically inject your environment variables into the Cloud Run service.
 
 ## Docker
 
