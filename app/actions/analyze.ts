@@ -43,11 +43,39 @@ export async function analyzeShoes(formData: FormData) {
       Missing views: ${missingViews.join(", ")}
     `;
 
-        const result = await model.generateContent([
-            systemPrompt,
-            contextMessage,
-            ...imageParts
-        ]);
+        const MAX_RETRIES = 3;
+        let attempt = 0;
+        let result = null;
+
+        while (attempt < MAX_RETRIES) {
+            try {
+                result = await model.generateContent([
+                    systemPrompt,
+                    contextMessage,
+                    ...imageParts
+                ]);
+                break; // Success, exit loop
+            } catch (error: any) {
+                attempt++;
+                console.error(`Attempt ${attempt} failed:`, error);
+
+                const isRetryable = error.message?.includes('503') || error.message?.includes('429');
+
+                if (isRetryable && attempt < MAX_RETRIES) {
+                    const delay = 1000 * Math.pow(2, attempt - 1); // 1s, 2s
+                    console.log(`Retrying in ${delay}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    continue;
+                }
+
+                // If not retryable or max retries reached, throw to outer catch
+                throw error;
+            }
+        }
+
+        if (!result) {
+            throw new Error("Failed to generate content after retries.");
+        }
 
         const responseText = result.response.text();
         console.log("Gemini Response:", responseText); // Debugging
@@ -60,8 +88,16 @@ export async function analyzeShoes(formData: FormData) {
             return { success: false, error: "Analysis result validation failed." };
         }
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Analysis failed:", error);
-        return { success: false, error: "Analysis failed. Please check API key and try again." };
+
+        let errorMessage = "Analysis failed. Please check API key and try again.";
+        if (error.message?.includes('503')) {
+            errorMessage = "Service temporarily unavailable (503). retried 3 times. Please try again later.";
+        } else if (error.message?.includes('429')) {
+            errorMessage = "Too many requests (429). Please wait a moment and try again.";
+        }
+
+        return { success: false, error: errorMessage };
     }
 }

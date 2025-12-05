@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useRef } from 'react';
 import { toast } from 'sonner';
-import { Upload, X, Camera, AlertCircle, CheckCircle, Activity, Footprints, Ruler, AlertTriangle, ArrowDown, ArrowRightFromLine, ArrowLeftFromLine, ArrowDownToLine, Info, Check, RotateCcw } from 'lucide-react';
+import { Upload, X, Camera, AlertCircle, CheckCircle, Activity, Footprints, Ruler, AlertTriangle, ArrowDown, ArrowRightFromLine, ArrowLeftFromLine, ArrowDownToLine, Info, Check, RotateCcw, Download, Loader2 } from 'lucide-react';
+import { toPng } from 'html-to-image';
 import imageCompression from 'browser-image-compression';
 import { analyzeShoes } from '@/app/actions/analyze';
 import { ForensicAnalysis } from '@/lib/schemas';
@@ -54,6 +55,26 @@ export default function Home() {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [capturedBlob, setCapturedBlob] = useState<Blob | null>(null);
 
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  const handleDownload = async () => {
+    if (!resultsRef.current) return;
+    try {
+      const dataUrl = await toPng(resultsRef.current, {
+        backgroundColor: '#ffffff',
+        cacheBust: true,
+      });
+      const link = document.createElement('a');
+      link.download = `run-or-done-report.png`;
+      link.href = dataUrl;
+      link.click();
+      toast.success("Report downloaded!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to generate report image");
+    }
+  };
+
   const handleImageUpload = async (key: string, file: File) => {
     try {
       const options = {
@@ -63,10 +84,16 @@ export default function Home() {
       };
 
       const compressedFile = await imageCompression(file, options);
-      const previewUrl = URL.createObjectURL(compressedFile);
+
+      // Convert to Base64 for reliable rendering in html-to-image
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setPreviews(prev => ({ ...prev, [key]: base64String }));
+      };
+      reader.readAsDataURL(compressedFile);
 
       setImages(prev => ({ ...prev, [key]: compressedFile }));
-      setPreviews(prev => ({ ...prev, [key]: previewUrl }));
       toast.success(`${key} image added`);
     } catch (error) {
       console.error(error);
@@ -82,7 +109,7 @@ export default function Home() {
     });
     setPreviews(prev => {
       const newPreviews = { ...prev };
-      URL.revokeObjectURL(newPreviews[key]);
+      // No need to revoke object URL as we are using base64
       delete newPreviews[key];
       return newPreviews;
     });
@@ -90,10 +117,7 @@ export default function Home() {
 
   const resetAnalysis = () => {
     setImages({});
-    setPreviews(prev => {
-      Object.values(prev).forEach(url => URL.revokeObjectURL(url));
-      return {};
-    });
+    setPreviews({}); // Just clear base64 strings
     setAnalysis(null);
     toast.info("Ready for new analysis");
   };
@@ -215,7 +239,49 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Upload Grid */}
+        {/* Instructions */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+          <h2 className="font-semibold text-lg flex items-center gap-2">
+            <Info className="w-5 h-5 text-blue-500" />
+            How to Photograph Your Shoes
+          </h2>
+
+          <div className="grid md:grid-cols-2 gap-6 text-sm text-slate-600">
+            <div className="space-y-3">
+              <h3 className="font-medium text-slate-900">General Guidelines</h3>
+              <ul className="space-y-2 list-disc pl-4 marker:text-slate-400">
+                <li><strong>One Shoe:</strong> Photograph only one shoe (left or right).</li>
+                <li><strong>Lighting:</strong> Use bright, even lighting on a plain background.</li>
+                <li><strong>Positioning:</strong> Place shoe on a <u>flat surface</u> (table or floor).</li>
+                <li><strong>Camera Level:</strong> Hold camera at the <u>same level as the shoe</u> for side views (not from above).</li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="font-medium text-slate-900">Required Views</h3>
+              <ul className="space-y-2">
+                <li className="flex gap-2">
+                  <Footprints className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                  <span><strong>Outsole:</strong> Bottom view showing the entire tread pattern.</span>
+                </li>
+                <li className="flex gap-2">
+                  <ArrowDownToLine className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                  <span><strong>Heel:</strong> Back view (camera level with shoe).</span>
+                </li>
+                <li className="flex gap-2">
+                  <ArrowRightFromLine className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                  <span><strong>Lateral (Outer):</strong> Side facing away from other foot (usually has large brand logo).</span>
+                </li>
+                <li className="flex gap-2">
+                  <ArrowLeftFromLine className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                  <span><strong>Medial (Inner):</strong> Arch side.</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Upload Grid */}:
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5 md:gap-6">
           {VIEWS.map(({ key, label, icon: Icon, description }) => (
             <div
@@ -281,11 +347,10 @@ export default function Home() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 w-full mt-1 p-2">
-                    {/* Gallery Input */}
+                  <div className="w-full mt-2 px-2 pb-2">
                     <label className={clsx(
-                      "flex items-center justify-center p-3 rounded-lg bg-slate-100 hover:bg-slate-200 cursor-pointer transition-colors",
-                      isPending && "pointer-events-none"
+                      "flex items-center justify-center gap-2 w-full p-3 rounded-xl bg-slate-900 text-white cursor-pointer hover:bg-slate-800 transition-all active:scale-95 shadow-md",
+                      isPending && "pointer-events-none opacity-50"
                     )}>
                       <input
                         type="file"
@@ -297,21 +362,9 @@ export default function Home() {
                           if (file) handleImageUpload(key, file);
                         }}
                       />
-                      <Upload size={18} className="text-slate-600" />
+                      <Upload size={18} />
+                      <span className="text-sm font-medium">Add Photo</span>
                     </label>
-
-                    {/* Camera Button (Webcam) */}
-                    <button
-                      type="button"
-                      onClick={() => startCamera(key)}
-                      disabled={isPending}
-                      className={clsx(
-                        "flex items-center justify-center p-3 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors",
-                        isPending && "pointer-events-none opacity-50"
-                      )}
-                    >
-                      <Camera size={18} className="text-slate-600" />
-                    </button>
                   </div>
                 </div>
               )}
@@ -326,11 +379,18 @@ export default function Home() {
               onClick={handleSubmit}
               disabled={isPending || Object.keys(images).length === 0}
               className={clsx(
-                "px-8 py-4 rounded-full font-semibold text-white shadow-lg transition-all transform hover:scale-105 active:scale-95",
+                "px-8 py-4 rounded-full font-semibold text-white shadow-lg transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2",
                 isPending ? "bg-slate-400 cursor-not-allowed" : "bg-slate-900 hover:bg-slate-800"
               )}
             >
-              {isPending ? "Analyzing..." : "Analyze Shoes"}
+              {isPending ? (
+                <>
+                  <Loader2 className="animate-spin" size={20} />
+                  <span>Analyzing... this may take a moment</span>
+                </>
+              ) : (
+                "Analyze Shoes"
+              )}
             </button>
           ) : (
             <>
@@ -338,11 +398,18 @@ export default function Home() {
                 onClick={handleSubmit}
                 disabled={isPending}
                 className={clsx(
-                  "px-8 py-4 rounded-full font-semibold text-white shadow-lg transition-all transform hover:scale-105 active:scale-95",
+                  "px-8 py-4 rounded-full font-semibold text-white shadow-lg transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2",
                   isPending ? "bg-slate-400 cursor-not-allowed" : "bg-slate-900 hover:bg-slate-800"
                 )}
               >
-                {isPending ? "Analyzing..." : "Update Analysis"}
+                {isPending ? (
+                  <>
+                    <Loader2 className="animate-spin" size={20} />
+                    <span>Analyzing...</span>
+                  </>
+                ) : (
+                  "Update Analysis"
+                )}
               </button>
               <button
                 onClick={resetAnalysis}
@@ -351,13 +418,22 @@ export default function Home() {
               >
                 New Analysis
               </button>
+
+              <button
+                onClick={handleDownload}
+                disabled={isPending}
+                className="px-8 py-4 rounded-full font-semibold text-slate-700 bg-white border-2 border-slate-200 shadow-lg transition-all transform hover:scale-105 active:scale-95 hover:bg-slate-50 hover:border-slate-300 flex items-center gap-2"
+              >
+                <Download size={20} />
+                Download Report
+              </button>
             </>
           )}
         </div>
 
         {/* Results */}
         {analysis && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div ref={resultsRef} className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 bg-slate-50 p-4 md:p-8 rounded-3xl">
 
             {/* Audit Feedback */}
             {analysis.analysis_audit.missing_views.length > 0 && (
@@ -507,6 +583,24 @@ export default function Home() {
               </div>
             </div>
 
+            {/* Analyzed Images Thumbnails */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+              <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                <Camera className="w-5 h-5 text-slate-400" /> Evidence
+              </h3>
+              <div className="grid grid-cols-5 gap-2">
+                {Object.entries(previews).map(([key, url]) => (
+                  <div key={key} className="space-y-1">
+                    <div className="aspect-square rounded-lg overflow-hidden border border-slate-100 bg-slate-50 relative">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={url} alt={key} className="w-full h-full object-cover" />
+                    </div>
+                    <p className="text-[10px] text-center text-slate-500 font-medium capitalize">{key.toLowerCase()}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
         )}
 
@@ -579,6 +673,6 @@ export default function Home() {
           </div>
         )}
       </div>
-    </main>
+    </main >
   );
 }

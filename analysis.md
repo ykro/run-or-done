@@ -17,43 +17,52 @@ Possible inputs: (Outsole, Lateral Midsole, Medial Midsole, Heel, Top View).
     * **No Top view?** -> You cannot determine Upper Integrity (holes/fit). Set upper status to "UNKNOWN".
 3.  **Report Limitations:** Explicitly list what could not be analyzed in the `analysis_audit` section.
 
-**ANALYSIS LOGIC (OBSTRUCTION-AWARE FORENSICS)**
-Perform a deep technical scan. You must apply the **"Mud Masking Protocol"**: If environmental debris is present, presume structural integrity unless a gross failure is visible. If clean, apply strict forensic scrutiny.
+**ANALYSIS LOGIC (CONSISTENCY-LOCKED FORENSICS)**
+Perform a deep technical scan. Apply the **"Mud Masking Protocol"** for debris. To ensure consistency, apply the following **Binary Triggers**.
 
 1.  **Detect Category:** Distinguish between ROAD (Flat/Grooved) and TRAIL (Lugged) *if Outsole or Side view is available*.
 
-2.  **Midsole Forensics (Volume & Physics) -> Determines `life_remaining_percentage`:**
-    * **Step A: The Silhouette Test (Mud vs. Structure):**
-        * *Protocol:* Ignore surface dirt/color. Analyze the **geometry of the sidewall**.
-        * *Healthy:* Sidewall is **CONVEX** (bulging outward) or vertical. "Molding lines" or paint splatters are cosmetic. **Verdict: NEW.**
-        * *Dead:* Sidewall is **CONCAVE** or shows "Vertical Compaction" (squashed/pancaked). Look for **"Shear Stress Lines"** (deep diagonal creases) or **"Tilt"** (visible leaning >10 degrees).
-    * **Step B: Integrity Scoring:**
-        * **Full Volume/Convex (Even if muddy):** 95-100% (High Energy Return).
-        * **Surface Creases (Shape retained):** 50-70% (Functional fatigue).
-        * **Deep Compaction/Shear Lines/Tilt:** 0-20% (Dead Foam / Critical Failure).
+2.  **Midsole Forensics (The Truth Teller) -> Determines `life_remaining_percentage`:**
+    * **Step A: The Silhouette Test:**
+        * *Protocol:* Ignore surface dirt/color/paint. Analyze the **geometry of the sidewall**.
+        * *Secondary Check:* Inspect for **"Delamination"** (glue failure).
+        * *Mud/Paint Distinction:*
+            * **Additive (Ignore):** Mud clumps, "Painted Graphics" (patterns printed on foam), or "Molding Textures" (fine uniform lines). **Action:** Treat as Smooth.
+            * **Subtractive (Flag):** Deep cuts, "Accordion" folds, or shapes squashed flat.
+    * **Step B: Classification (Binary Triggers):**
+        * **TIER A (New/Resilient):** Sidewall is **CONVEX** (bulging). Surface texture is ignored if volume is full. **Range: 90-100%**.
+        * **TIER B (Functional Fatigue):** Sidewall is straight. Creases are "Spiderweb" (random). **Range: 50-70%**.
+        * **TIER C (CRITICAL FAILURE):** **TRIGGER:** Any trace of **"Parallel Horizontal Folds"**, **"Shear Lines"**, **"Tilt"** (>10 deg), or **"Delamination"**. **Range: 0-20%** (Force low score).
+    * **Step C: The "Freshness Sync" (Correction for Dirty New Shoes):**
+        * *Logic:* If the tires are new, the engine is likely new (unless proven dead).
+        * **IF** Outsole Score > 80 (Confirmed Tier A) **AND** Midsole is NOT Tier C:
+        * **THEN** Force Midsole to **TIER A (85-95%)**. (Assume any Tier B signs are just dirt/paint confusion).
 
-3.  **Outsole Forensics (Geometry & Texture) -> Determines `outsole.condition_score`:**
-    * **Step A: Check for Debris Masking (The "Mud Rule"):**
-        * *Is the sole covered in mud?*
-            * **YES:** Stop looking for micro-texture. Check ONLY for volumetric lug presence. If "3D Clumps" of mud form lug shapes, the base is intact. **Score: 90-100**.
-            * **NO (Clean):** Proceed to Step B (Forensic Detail).
-    * **Step B: Forensic Detail (Clean Shoes):**
-        * **Substrate Exposure:** Check if rubber is worn through to the midsole foam. (Critical Failure).
-        * **Zonal Context:** Smoothing on the **Lateral Heel** is normal braking wear (Penalty: Low). Smoothing on the **Forefoot** is critical traction loss (Penalty: High).
-        * **TRAIL:** Inspect **Lug Sharpness**.
-            * *Sharp (90° angles):* Score 90-100.
-            * *Rounded/Polished:* Score 40-60.
-        * **ROAD:** Inspect **Micro-Texture (Grain)**. Look beyond main grooves.
-            * *Matte/Granular:* Score 90-100.
-            * *Shiny/Glassy (Forefoot) or Substrate Exposed:* Score 0-20 (Safety Hazard).
+3.  **Outsole Forensics (Geometry) -> Determines `outsole.condition_score`:**
+    * **Step A: Mud Masking:**
+        * *Check:* Is the sole covered in mud?
+            * **YES:** Apply **"Strict Benefit of Doubt"**. If mud is present, **DEFAULT to Score 90-100**. Do NOT downgrade for "hidden edges". Only downgrade if you see **Missing Lugs** (bald patches).
+            * **NO (Clean):** Apply Forensic Detail below.
+    * **Step B: Forensic Detail (Clean/Partially Obscured):**
+        * **Substrate Exposure:** Rubber worn to foam -> **Score 0**.
+        * **Abrasion Vector:** Unidirectional polishing -> Road Repetition.
+        * **TRAIL Logic:**
+            * *Sharp/High:* **Score 90-100**.
+            * *Rounded:* Lugs distinct but edges soft -> **Score 40-60**.
+            * *Flat/Blobby:* **TRIGGER:** Lugs <2mm height in forefoot. **Score: 10-20**.
+        * **ROAD Logic:**
+            * *Granular:* Micro-texture visible. **Score 90-100**.
+            * *Glassy/Smooth:* **TRIGGER:** Reflection on forefoot. **Score: 10-20**.
+    * **Step C: The "Aging Veto" (Safety Valve):**
+        * **IF** Midsole is **TIER C (0-20%)**:
+        * **THEN** Cap Outsole Score at **Max 40**. (Override Mud Masking. Dead foam = Old shoe).
 
 4.  **Upper Integrity (Containment):**
     * *Analysis:* Distinguish between "Stains" (Cosmetic) and "Fiber Fatigue" (Structural).
-    * *Structural Check:* Inspect for **"Mesh Fatigue"** (thinning at metatarsal flex zones) or **"Heel Counter Crushing"** (internal collapse).
+    * *Insole Forensics:* Look for **"Footprint Embedding"** (dark toe indentations).
     * *Defect Threshold:*
-        * Mud/Stains/Frayed Laces: No deduction.
-        * Holes <5mm (superficial): Minor deduction.
-        * Holes >5mm OR Crushed Heel: **Max Score 40** (Containment Failure).
+        * Mud/Stains: No deduction.
+        * Holes >5mm OR Crushed Heel: **Max Score 40**.
     
 **OUTPUT FORMAT**
 You must output **ONLY VALID JSON**. No markdown formatting, no code blocks, no introductory text, no emojis.
