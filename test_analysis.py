@@ -36,6 +36,7 @@ def load_api_key():
         load_dotenv(dotenv_path=env_path, override=True)
     
     api_key = os.getenv("GEMINI_API_KEY")
+
     if not api_key:
         console.print("[bold red]Error:[/bold red] GEMINI_API_KEY not found in .env.local or environment variables.")
         raise typer.Exit(code=1)
