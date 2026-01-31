@@ -4,7 +4,7 @@ AI-Powered Running Shoe Forensic Analysis application.
 
 ## Demo
 
-Try the application live: [Run-or-Done on Cloud Run](https://run-or-done-504954692234.us-central1.run.app/)
+Try the application live: [Run-or-Done on Cloud Run](https://run-or-done-622959071640.us-central1.run.app/)
 
 ![Analysis Result Preview](./assets/result_preview.png)
 
